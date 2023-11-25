@@ -1,0 +1,144 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+struct Customer {
+    string name;
+    float heightInCentimeters;
+    bool isReserved;
+    string checkInTime;  
+    string checkOutTime; 
+    string checkInPeriod; 
+    string checkOutPeriod; 
+};
+
+struct RentalHistory {
+    string name;
+    float heightInCentimeters;
+    string entryTime; 
+    string exitTime;  
+    float rentalFee;
+};
+
+float calculateRentalFee(const string& checkInTime, const string& checkOutTime, const string& checkInPeriod, const string& checkOutPeriod) {
+    const float fixedFeePerHour = 150.0;
+
+    int checkInHour, checkInMinute, checkOutHour, checkOutMinute;
+    sscanf(checkInTime.c_str(), "%d:%d", &checkInHour, &checkInMinute);
+    sscanf(checkOutTime.c_str(), "%d:%d", &checkOutHour, &checkOutMinute);
+
+    if (checkInPeriod == "PM") checkInHour += 12;
+    if (checkOutPeriod == "PM") checkOutHour += 12;
+
+    float durationInHours = static_cast<float>(checkOutHour - checkInHour) + (checkOutMinute - checkInMinute) / 60.0;
+
+    return fixedFeePerHour * durationInHours;
+}
+
+void displayRentalHistory(const vector<RentalHistory>& history) {
+    cout << "Rental History:\n";
+    cout << "-------------------------------------------------\n";
+    cout << "Name\t\tHeight (cm)\tEntry Time\tExit Time\tRental Fee\n";
+    cout << "-------------------------------------------------\n";
+
+    for (size_t i = 0; i < history.size(); ++i) {
+        cout << history[i].name << "\t\t" << history[i].heightInCentimeters << "\t"
+             << history[i].entryTime << "\t" << history[i].exitTime << "\t" << history[i].rentalFee << endl;
+    }
+
+    cout << "-------------------------------------------------\n";
+}
+
+int main() {
+    vector<Customer> customers;
+    vector<RentalHistory> rentalHistory;
+
+    char choice;
+
+    do {
+        cout << "1. Reserve a swimming session\n";
+        cout << "2. Customer check-in\n";
+        cout << "3. Customer check-out\n";
+        cout << "4. Display rental history\n";
+        cout << "5. Exit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case '1': {
+                Customer newCustomer;
+                cout << "Enter customer name: ";
+                cin >> newCustomer.name;
+                cout << "Enter customer height (in centimeters): ";
+                cin >> newCustomer.heightInCentimeters;
+                newCustomer.isReserved = true;
+                customers.push_back(newCustomer);
+                cout << "Reservation successful!\n";
+                break;
+            }
+
+            case '2': {
+                string customerName;
+                cout << "Enter customer name: ";
+                cin >> customerName;
+
+                for (size_t i = 0; i < customers.size(); ++i) {
+                    if (customers[i].name == customerName && customers[i].isReserved) {
+                        cout << "Enter check-in time (HH:MM AM/PM): ";
+                        cin >> customers[i].checkInTime;
+                        cin >> customers[i].checkInPeriod;
+                        customers[i].isReserved = false;
+                        cout << "Check-in successful!\n";
+                        break;
+                    }
+                }
+                break;
+            }
+
+            case '3': {
+                string customerName;
+                cout << "Enter customer name: ";
+                cin >> customerName;
+
+                for (size_t i = 0; i < customers.size(); ++i) {
+                    if (customers[i].name == customerName && !customers[i].isReserved) {
+                        cout << "Enter check-out time (HH:MM AM/PM): ";
+                        cin >> customers[i].checkOutTime;
+                        cin >> customers[i].checkOutPeriod;
+                        float rentalFee = calculateRentalFee(
+                            customers[i].checkInTime, customers[i].checkOutTime, customers[i].checkInPeriod, customers[i].checkOutPeriod);
+                        RentalHistory historyEntry;
+                        historyEntry.name = customers[i].name;
+                        historyEntry.heightInCentimeters = customers[i].heightInCentimeters;
+                        historyEntry.entryTime = customers[i].checkInTime + " " + customers[i].checkInPeriod;
+                        historyEntry.exitTime = customers[i].checkOutTime + " " + customers[i].checkOutPeriod;
+                        historyEntry.rentalFee = rentalFee;
+                        rentalHistory.push_back(historyEntry);
+                        customers.erase(customers.begin() + i);
+                        cout << "Check-out successful!\n";
+                        cout << "Rental fee: " << rentalFee << endl;
+                        break;
+                    }
+                }
+                break;
+            }
+
+            case '4': {
+                displayRentalHistory(rentalHistory);
+                break;
+            }
+
+            case '5':
+                cout << "Exiting the program. Goodbye!\n";
+                break;
+
+            default:
+                cout << "Invalid choice. Please try again.\n";
+                break;
+        }
+
+    } while (choice != '5');
+
+    return 0;
+}
